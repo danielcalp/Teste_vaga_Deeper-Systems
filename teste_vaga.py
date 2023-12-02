@@ -4,6 +4,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+from datetime import datetime
+import pytz
 import time
 import json
 
@@ -46,6 +48,7 @@ def moneyline2(jogo):
     dicionario_teste['team'] = team2
     dicionario_teste['spread'] = '0'
     lista_dicionario.append(dicionario_teste.copy())
+
 
 def spread1(jogo):
     dicionario_teste['line_type'] = 'spread'
@@ -115,6 +118,14 @@ for tabela_coluna in lista_tabelas_colunas:
             dicionario_teste = {}
             dicionario_teste['sport_league'] = sport_league
             event_date_utc = jogo.find_element(By.XPATH, './div/div/div/div/table/tbody/tr[4]/td[1]/table/tbody/tr/td/span[2]').text
+            try:
+                data_hora = datetime.strptime(event_date_utc, "%I:%M %p ET (%m/%d/%Y)")
+                fuso_horario_et = pytz.timezone('US/Eastern')
+                data_hora_et = fuso_horario_et.localize(data_hora)
+                formato_iso8601 = "%Y-%m-%dT%H:%M:%S%z"
+                event_date_utc = data_hora_et.strftime(formato_iso8601)
+            except:
+                pass
             dicionario_teste['event_date_utc'] = event_date_utc
             team1 = jogo.find_element(By.XPATH, './div/div/div/div/table/tbody/tr[2]/td[1]/table/tbody/tr/td/table/tbody/tr/td[1]/a/span').text
             dicionario_teste['team1'] = team1
@@ -122,6 +133,10 @@ for tabela_coluna in lista_tabelas_colunas:
             team2 = jogo.find_element(By.XPATH, './div/div/div/div/table/tbody/tr[3]/td[1]/table/tbody/tr/td/table/tbody/tr/td[1]/a/span').text
             dicionario_teste['team2'] = team2
             dicionario_teste['pitcher'] = ''
+            if sport_league == "SOCCER":
+                draw_price = jogo.find_element(By.XPATH, './div/div/div/div/table/tbody/tr[4]/td[2]/table/tbody/tr/td/span').text.splitlines()[1]
+                dicionario_teste['draw_price'] = draw_price
+
             period = jogo.find_element(By.XPATH, './div/div/div/div/table/tbody/tr[1]/td[1]/span').text
             period = period.replace(" ODDS", "")
             dicionario_teste['period'] = period
